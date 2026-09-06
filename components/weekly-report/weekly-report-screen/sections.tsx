@@ -88,7 +88,12 @@ export const KeywordSection = ({ report }: { report: WeeklyReportDetail }) => (
               className="font-semibold"
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={iconSrc} alt="" className="size-3.5" aria-hidden />
+              <img
+                src={iconSrc}
+                alt=""
+                className="size-3.5 shrink-0"
+                aria-hidden
+              />
               {keyword.keyword}
             </Chip>
           );
@@ -143,9 +148,7 @@ export const BestMomentSection = ({
               />
             ))}
           </div>
-        ) : (
-          <span className="h-1.5 w-6 rounded-full bg-black" />
-        )}
+        ) : null}
       </div>
     </ReportSection>
   );
