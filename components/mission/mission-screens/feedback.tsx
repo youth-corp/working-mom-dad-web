@@ -267,7 +267,7 @@ export function MissionFeedbackScreen({
                 <button
                   type="button"
                   onClick={() => setShowCloseConfirm(false)}
-                  className="flex h-12 w-full items-center justify-center rounded-xl bg-primary-300 px-4 py-3.5 text-sm font-medium leading-[1.4] text-white"
+                  className="flex h-12 w-full items-center justify-center rounded-2xl bg-primary-300 px-4 py-3.5 text-sm font-medium leading-[1.4] text-white"
                 >
                   피드백 작성하기
                 </button>
