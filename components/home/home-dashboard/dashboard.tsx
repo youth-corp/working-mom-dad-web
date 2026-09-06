@@ -71,28 +71,30 @@ export const HomeDashboard = () => {
     track({ type: "home_view" });
     let active = true;
     void (async () => {
-      try {
-        const next = await loadHomeDashboard(getStoredSelectedChildId());
-        if (!active) return;
-        setState(next);
-        setSelectedChildId(next.data.selectedChild.id);
-        try {
-          const me = await api.getMe();
-          const playNotificationEnabled = me.notificationPreferences.some(
-            (preference) =>
-              preference.type === "play_10min" && preference.enabled,
-          );
-          if (active) {
-            setShowNotificationNudge(!playNotificationEnabled);
-          }
-        } catch {
-          // 설정 상태를 확인하지 못하면 잘못 보이는 것보다 숨김을 우선한다.
-        }
-      } catch {
-        // 초기 로드 실패 — 렌더에서 에러 UI 노출
-      } finally {
-        if (active) setLoading(false);
+      // 홈 데이터와 알림 설정 상태는 서로 의존하지 않는다. 직렬로 기다리면
+      // API 왕복이 2번 쌓여 첫 화면이 그만큼 늦어지므로 함께 띄운다.
+      const [home, me] = await Promise.allSettled([
+        loadHomeDashboard(getStoredSelectedChildId()),
+        api.getMe(),
+      ]);
+      if (!active) return;
+
+      if (home.status === "fulfilled") {
+        setState(home.value);
+        setSelectedChildId(home.value.data.selectedChild.id);
       }
+      // 실패 시 state가 없으므로 렌더에서 에러 UI가 노출된다.
+
+      if (me.status === "fulfilled") {
+        const playNotificationEnabled = me.value.notificationPreferences.some(
+          (preference) =>
+            preference.type === "play_10min" && preference.enabled,
+        );
+        setShowNotificationNudge(!playNotificationEnabled);
+      }
+      // 설정 상태를 확인하지 못하면 잘못 보이는 것보다 숨김을 우선한다.
+
+      setLoading(false);
     })();
     return () => {
       active = false;

@@ -1,12 +1,17 @@
 @import "tailwindcss";
 @import "pretendard/dist/web/variable/pretendardvariable-dynamic-subset.css";
 
-/* SUIT Variable — self-host (Figma: 월 헤딩·통계 숫자 등 숫자 강조에 사용) */
+/* SUIT Variable — self-host (Figma: 월 헤딩·통계 숫자 등 숫자 강조에 사용).
+   실제 사용처가 숫자뿐(미션 타이머 MM:SS, StatValue)이라 원본 610KB 한글 풀셋 대신
+   숫자·구두점만 남긴 서브셋(7KB)을 배포한다. unicode-range로 한글·영문에는
+   아예 적용되지 않게 해, 숫자가 없는 화면에서는 다운로드 자체가 일어나지 않는다.
+   한글을 SUIT로 쓸 일이 생기면 서브셋 범위를 넓혀 다시 생성해야 한다. */
 @font-face {
   font-family: "SUIT Variable";
   font-weight: 100 900;
   font-display: swap;
   src: url("/fonts/suit/SUIT-Variable.woff2") format("woff2-variations");
+  unicode-range: U+0020, U+0025, U+002B-002F, U+0030-0039, U+003A;
 }
 
 @theme {
