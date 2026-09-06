@@ -15,7 +15,7 @@ export const ReportProgressBanner = ({
   countdown: WeeklyReportCountdown;
   streak: number;
 }) => (
-  <div className="flex min-h-12 items-center justify-between gap-3 rounded-full bg-primary-50 px-4">
+  <div className="flex min-h-12 items-center justify-between gap-3 rounded-3xl bg-primary-50 px-4 py-2.5">
     <div className="flex min-w-0 items-center gap-2">
       <Image
         src="/images/figma/home/star-shine.png"
@@ -24,9 +24,9 @@ export const ReportProgressBanner = ({
         height={13}
         className="shrink-0"
       />
-      <p className="truncate text-sm font-medium text-gray-800">
+      <p className="text-sm font-medium text-gray-800">
         {countdown.kind === "generation_tomorrow"
-          ? "주간 리포트가 내일 아침에 생성돼요."
+          ? "주간 리포트가 내일 아침에 생성돼요!"
           : `주간 리포트 생성까지 ${countdown.daysRemaining}일 남았어요!`}
       </p>
     </div>
