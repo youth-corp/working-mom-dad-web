@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import { cache } from "react";
 
 /**
  * 라우팅 분기에 필요한 me 최소 필드. 미온보딩 사용자는 name 등이 null이라
@@ -45,8 +46,12 @@ export async function createSupabaseServerClient() {
 /**
  * Server Component에서 도메인 `GET /me`를 호출.
  * 세션 없음 → null. 도메인 row 없음(미온보딩)도 `me.onboardedAt = null`로 응답된다.
+ *
+ * `cache: "no-store"`라 Next의 fetch 중복 제거가 걸리지 않는다. layout과 page가
+ * 같은 렌더에서 각각 호출하면(예: `(main)/layout.tsx` + `(main)/page.tsx`)
+ * Render API 왕복이 2번 발생하므로 React `cache()`로 요청 단위 중복을 제거한다.
  */
-export async function fetchServerMe(): Promise<ServerMe | null> {
+export const fetchServerMe = cache(async function fetchServerMe(): Promise<ServerMe | null> {
   const supabase = await createSupabaseServerClient();
   const {
     data: { session },
@@ -59,4 +64,4 @@ export async function fetchServerMe(): Promise<ServerMe | null> {
   });
   if (!res.ok) return null;
   return (await res.json()) as ServerMe;
-}
+});
