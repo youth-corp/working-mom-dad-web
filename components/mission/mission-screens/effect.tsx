@@ -162,20 +162,22 @@ export function MissionEffectScreen({
           debugPermission ?? (await requestNativePushPermissionStatus());
         if (cancelled || !status) return;
 
-        // OS 권한이 허용된 경우에도 앱 내부의 놀이 알림이 꺼져 있으면
-        // 시간대 설정으로 유도한다. 이때는 OS 권한을 다시 요청하지 않는다.
-        if (status === "granted") {
-          try {
-            const me = await api.getMe();
-            if (
-              cancelled ||
-              !isPlayNotificationDisabled(me.notificationPreferences)
-            ) {
-              return;
-            }
-          } catch {
+        // 앱 내부의 놀이 알림이 이미 켜져 있으면 OS 권한 상태와 무관하게
+        // 다시 요청하지 않는다. 홈 카드의 알림 설정은 서버 설정만 저장하고
+        // OS 권한은 건드리지 않으므로, granted 조건으로만 걸러내면 이미
+        // 설정을 마친 사용자에게 요청 모달이 다시 노출된다.
+        // 알림이 꺼져 있고 OS 권한이 허용된 경우에는 시간대 설정으로
+        // 유도하며, 이때 OS 권한을 다시 요청하지는 않는다.
+        try {
+          const me = await api.getMe();
+          if (
+            cancelled ||
+            !isPlayNotificationDisabled(me.notificationPreferences)
+          ) {
             return;
           }
+        } catch {
+          return;
         }
 
         try {
