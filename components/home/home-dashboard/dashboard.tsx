@@ -378,10 +378,8 @@ export const HomeDashboard = () => {
           />
           <HomeShortcutCards
             roadmapProgress={data.roadmapProgress}
-            completedPlayCount={data.reportSummary?.completedPlayCount ?? 0}
-            positiveReactionRate={
-              data.reportSummary?.childPositiveReactionRate ?? 0
-            }
+            reportSummary={data.reportSummary}
+            reportCountdown={getWeeklyReportCountdown()}
             onRoadmap={() => router.push("/roadmap")}
             onReport={() => router.push("/weekly-report")}
           />

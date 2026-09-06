@@ -98,16 +98,32 @@ export const TodayMissionCard = ({
   );
 };
 
+// 홈 카드가 보여주는 수치는 항상 "지난주" 리포트다. 이번 주에 막 시작한
+// 사용자가 0회를 오늘 기록이 누락된 것으로 오해하지 않도록 주차를 명시하고,
+// 지난주 리포트 자체가 없으면 생성 시점을 안내한다.
+const reportSummaryDescription = (
+  reportSummary: HomeDashboardData["reportSummary"],
+  countdown: WeeklyReportCountdown,
+) => {
+  if (reportSummary) {
+    return `지난주 놀이 ${reportSummary.completedPlayCount}회 · 아이 반응 ${reportSummary.childPositiveReactionRate}%`;
+  }
+
+  return countdown.kind === "generation_tomorrow"
+    ? "첫 리포트가 내일 아침에 생성돼요"
+    : `첫 리포트까지 ${countdown.daysRemaining}일 남았어요`;
+};
+
 export const HomeShortcutCards = ({
   roadmapProgress,
-  completedPlayCount,
-  positiveReactionRate,
+  reportSummary,
+  reportCountdown,
   onRoadmap,
   onReport,
 }: {
   roadmapProgress: HomeDashboardData["roadmapProgress"];
-  completedPlayCount: number;
-  positiveReactionRate: number;
+  reportSummary: HomeDashboardData["reportSummary"];
+  reportCountdown: WeeklyReportCountdown;
   onRoadmap: () => void;
   onReport: () => void;
 }) => (
@@ -127,7 +143,7 @@ export const HomeShortcutCards = ({
     />
     <ShortcutCard
       title="주간리포트"
-      description={`놀이 ${completedPlayCount}회 · 아이 반응 ${positiveReactionRate}%`}
+      description={reportSummaryDescription(reportSummary, reportCountdown)}
       onClick={onReport}
     />
   </section>
