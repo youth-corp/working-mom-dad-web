@@ -15,6 +15,12 @@ declare global {
       platform: string;
       entryPath: string;
       sessionLookupMs?: number;
+      startupClock?:
+        | "android_elapsed_realtime"
+        | "ios_system_uptime"
+        | "js_shell";
+      nativeStartupElapsedMs?: number;
+      startupProtocol?: number;
     };
   }
 }
@@ -159,26 +165,100 @@ export function markNativeHomeEntry() {
 
 export function reportNativeHome() {
   const native = window.__YOUGABELL_PERFORMANCE__;
-  if (!native || nativeHomeReported || native.entryPath !== "/mobile-entry")
-    return;
-  nativeHomeReported = true;
-  try {
-    if (sessionStorage.getItem("perf:home-eligible") !== native.launchId)
-      return;
-    if (sessionStorage.getItem("perf:home-launch") === native.launchId) return;
-    sessionStorage.setItem("perf:home-launch", native.launchId);
-  } catch {
+  if (native?.startupProtocol === 2) {
+    if (nativeHomeReported || document.visibilityState !== "visible") return;
+    nativeHomeReported = true;
+    const onResult = (event: Event) => {
+      const result = (event as CustomEvent).detail;
+      if (!result || result.launch_id !== native.launchId) return;
+      window.removeEventListener("yougabell-startup-result", onResult);
+      clearTimeout(timeout);
+      const duration = result.duration_ms;
+      if (
+        typeof duration === "number" &&
+        Number.isFinite(duration) &&
+        duration >= 0
+      ) {
+        reportPerformance("native_home_ready", {
+          schema_version: 2,
+          duration_ms: duration,
+          clock: result.clock,
+          start_point: result.start_point,
+          endpoint: result.endpoint,
+          launch_type: result.launch_type,
+          visible: true,
+        });
+      } else {
+        reportPerformance("native_home_ready_skipped", {
+          reason: result.reason ?? "invalid_result",
+        });
+      }
+    };
+    window.addEventListener("yougabell-startup-result", onResult);
+    const timeout = window.setTimeout(() => {
+      window.removeEventListener("yougabell-startup-result", onResult);
+      reportPerformance("native_home_ready_skipped", {
+        reason: "native_reply_timeout",
+      });
+    }, 10000);
+    window.ReactNativeWebView?.postMessage(
+      JSON.stringify({
+        type: "PERFORMANCE_HOME_READY",
+        payload: { launchId: native.launchId },
+      }),
+    );
     return;
   }
+  if (!native) {
+    reportPerformance("native_shell_home_skipped", {
+      reason: "missing_native_context",
+    });
+    return;
+  }
+  if (nativeHomeReported) {
+    return;
+  }
+  if (native.entryPath !== "/mobile-entry") {
+    reportPerformance("native_shell_home_skipped", {
+      reason: "entry_path_mismatch",
+      entry_path: safeRoute(native.entryPath),
+    });
+    return;
+  }
+  try {
+    if (sessionStorage.getItem("perf:home-eligible") !== native.launchId) {
+      reportPerformance("native_shell_home_skipped", {
+        reason: "missing_launch_marker",
+      });
+      return;
+    }
+    if (sessionStorage.getItem("perf:home-launch") === native.launchId) {
+      return;
+    }
+    sessionStorage.setItem("perf:home-launch", native.launchId);
+  } catch {
+    reportPerformance("native_shell_home_skipped", {
+      reason: "storage_unavailable",
+    });
+    return;
+  }
+  nativeHomeReported = true;
   const duration = Date.now() - native.startedAt;
   if (duration < 0) return;
   reportPerformance("native_shell_home", {
     duration_ms: duration,
     visible: document.visibilityState === "visible",
     clock: "wall",
+    startup_source:
+      native.startupClock === undefined || native.startupClock === "js_shell"
+        ? "js_shell"
+        : "native_callback_wall_estimate",
     ...(native.sessionLookupMs === undefined
       ? {}
       : { session_lookup_ms: native.sessionLookupMs }),
+    ...(native.nativeStartupElapsedMs === undefined
+      ? {}
+      : { native_startup_elapsed_ms: native.nativeStartupElapsedMs }),
   });
 }
 
