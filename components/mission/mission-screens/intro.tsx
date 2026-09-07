@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { track } from "@/lib/analytics";
+import { useScreenPerformance } from "@/hooks/use-screen-performance";
 import { Mascot } from "@/components/characters/mascot";
 import {
   api,
@@ -57,6 +58,12 @@ export function MissionIntroScreen() {
   const [switcherOpen, setSwitcherOpen] = useState(false);
   const [sourceTooltipOpen, setSourceTooltipOpen] = useState(false);
   const [sourceModalOpen, setSourceModalOpen] = useState(false);
+  useScreenPerformance(
+    "/mission",
+    loading || !state || state.data.activeExecution?.status === "in_progress"
+      ? "pending"
+      : state.source,
+  );
 
   useEffect(() => {
     let cancelled = false;

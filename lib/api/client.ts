@@ -1,10 +1,14 @@
 import createClient from "openapi-fetch";
+import { measuredFetch } from "../performance";
 import type { paths } from "../generated/api-types";
 import { createSupabaseBrowserClient } from "../supabase/client";
 
 export const BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:3001";
-export const openApiClient = createClient<paths>({ baseUrl: BASE_URL });
+export const openApiClient = createClient<paths>({
+  baseUrl: BASE_URL,
+  fetch: measuredFetch,
+});
 
 /**
  * Supabase 브라우저 세션에서 access_token을 꺼내 Authorization 헤더 구성.
@@ -26,7 +30,7 @@ export async function request<T>(
 ): Promise<T> {
   const { json, headers, ...rest } = init ?? {};
   const auth = await authHeaders();
-  const res = await fetch(`${BASE_URL}${path}`, {
+  const res = await measuredFetch(`${BASE_URL}${path}`, {
     ...rest,
     headers: {
       "Content-Type": "application/json",

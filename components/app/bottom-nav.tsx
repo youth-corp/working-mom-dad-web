@@ -7,6 +7,7 @@ import {
   loadWeeklyReportUnviewedStatus,
 } from "@/lib/api";
 import { track } from "@/lib/analytics";
+import { beginScreen } from "@/lib/performance";
 import type { NavigationEvent } from "@/lib/analytics";
 
 const NAV_ICON_PATHS = {
@@ -148,6 +149,7 @@ export const BottomNav = () => {
                 // 이미 열려 있는 탭이면 화면 전환이 없으므로 유입으로 세지 않는다.
                 if (item.href === pathname) return;
                 track({ type: "bottom_nav_tap", tab: item.tab });
+                beginScreen(item.href);
                 router.push(item.href);
               }}
               aria-current={active ? "page" : undefined}

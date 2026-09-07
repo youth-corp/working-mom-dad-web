@@ -12,6 +12,7 @@ import {
   subscribeToNativeMessages,
 } from "@/lib/native-bridge";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import { markNativeHomeEntry, reportPerformance } from "@/lib/performance";
 
 export default function MobileEntryPage() {
   const { draft } = useOnboardingDraft();
@@ -30,6 +31,11 @@ export default function MobileEntryPage() {
       const me = await api.getMe();
       resolvedRef.current = true;
       if (me.onboardedAt) {
+        markNativeHomeEntry();
+        reportPerformance("mobile_entry_redirect", {
+          duration_ms: performance.now(),
+          destination: "home",
+        });
         window.location.replace("/");
         return;
       }
@@ -82,9 +88,13 @@ export default function MobileEntryPage() {
 
       window.clearTimeout(fallbackTimeoutId);
       void (async () => {
+        const started = performance.now();
         await supabase.auth.setSession({
           access_token: message.payload.accessToken,
           refresh_token: message.payload.refreshToken,
+        });
+        reportPerformance("web_session_sync", {
+          duration_ms: performance.now() - started,
         });
         await waitForServerSession();
         await goToAuthenticatedStart();
