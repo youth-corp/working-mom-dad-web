@@ -15,6 +15,8 @@ declare global {
       platform: string;
       entryPath: string;
       sessionLookupMs?: number;
+      startupClock?: "android_elapsed_realtime" | "ios_system_uptime" | "js_shell";
+      nativeStartupElapsedMs?: number;
     };
   }
 }
@@ -159,26 +161,56 @@ export function markNativeHomeEntry() {
 
 export function reportNativeHome() {
   const native = window.__YOUGABELL_PERFORMANCE__;
-  if (!native || nativeHomeReported || native.entryPath !== "/mobile-entry")
-    return;
-  nativeHomeReported = true;
-  try {
-    if (sessionStorage.getItem("perf:home-eligible") !== native.launchId)
-      return;
-    if (sessionStorage.getItem("perf:home-launch") === native.launchId) return;
-    sessionStorage.setItem("perf:home-launch", native.launchId);
-  } catch {
+  if (!native) {
+    reportPerformance("native_shell_home_skipped", {
+      reason: "missing_native_context",
+    });
     return;
   }
+  if (nativeHomeReported) {
+    return;
+  }
+  if (native.entryPath !== "/mobile-entry") {
+    reportPerformance("native_shell_home_skipped", {
+      reason: "entry_path_mismatch",
+      entry_path: native.entryPath,
+    });
+    return;
+  }
+  try {
+    if (sessionStorage.getItem("perf:home-eligible") !== native.launchId) {
+      reportPerformance("native_shell_home_skipped", {
+        reason: "missing_launch_marker",
+      });
+      return;
+    }
+    if (sessionStorage.getItem("perf:home-launch") === native.launchId) {
+      return;
+    }
+    sessionStorage.setItem("perf:home-launch", native.launchId);
+  } catch {
+    reportPerformance("native_shell_home_skipped", {
+      reason: "storage_unavailable",
+    });
+    return;
+  }
+  nativeHomeReported = true;
   const duration = Date.now() - native.startedAt;
   if (duration < 0) return;
   reportPerformance("native_shell_home", {
     duration_ms: duration,
     visible: document.visibilityState === "visible",
-    clock: "wall",
+    clock: native.startupClock ?? "js_shell",
+    startup_source:
+      native.startupClock === undefined || native.startupClock === "js_shell"
+        ? "js_shell"
+        : "native_process",
     ...(native.sessionLookupMs === undefined
       ? {}
       : { session_lookup_ms: native.sessionLookupMs }),
+    ...(native.nativeStartupElapsedMs === undefined
+      ? {}
+      : { native_startup_elapsed_ms: native.nativeStartupElapsedMs }),
   });
 }
 
