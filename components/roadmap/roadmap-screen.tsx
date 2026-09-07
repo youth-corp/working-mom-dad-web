@@ -13,6 +13,7 @@ import {
   setRoadmapMilestoneCompletion,
 } from "@/lib/api";
 import { track } from "@/lib/analytics";
+import { useScreenPerformance } from "@/hooks/use-screen-performance";
 import {
   CDC_CHECKPOINTS,
   ROADMAP_CATEGORY_DISPLAY,
@@ -30,6 +31,7 @@ export const RoadmapScreen = () => {
   const [childMonth, setChildMonth] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [source, setSource] = useState<"api" | "demo">("demo");
+  useScreenPerformance("/roadmap", loading || !data ? "pending" : source);
   const [pendingMilestoneIds, setPendingMilestoneIds] = useState<Set<string>>(
     new Set(),
   );

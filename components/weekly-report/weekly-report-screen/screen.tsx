@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { AppHeader, HeaderSpacer } from "@/components/app/app-header";
 import { track } from "@/lib/analytics";
+import { useScreenPerformance } from "@/hooks/use-screen-performance";
 import {
   getStoredSelectedChildId,
   loadWeeklyReport,
@@ -34,6 +35,16 @@ export const WeeklyReportScreen = () => {
   const router = useRouter();
   const [state, setState] = useState<WeeklyReportLoadState | null>(null);
   const [loading, setLoading] = useState(true);
+  useScreenPerformance(
+    "/weekly-report",
+    loading
+      ? "pending"
+      : state?.error
+        ? "error"
+        : state?.data
+          ? "api"
+          : "pending",
+  );
 
   const requestReport = useCallback(() => {
     const params = new URLSearchParams(window.location.search);
@@ -115,7 +126,10 @@ export const WeeklyReportScreen = () => {
         ) : state?.error ? (
           <WeeklyReportError error={state.error} onRetry={load} />
         ) : state?.data ? (
-          <WeeklyReportContent data={state.data} onStartMission={startMission} />
+          <WeeklyReportContent
+            data={state.data}
+            onStartMission={startMission}
+          />
         ) : null}
       </div>
     </div>

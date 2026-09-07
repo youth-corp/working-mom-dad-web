@@ -14,6 +14,7 @@ import {
 } from "@/components/chat/message-bubbles";
 import { useChatTypewriter } from "@/hooks/use-chat-typewriter";
 import { track } from "@/lib/analytics";
+import { useScreenPerformance } from "@/hooks/use-screen-performance";
 import { loadChat, streamChatMessage } from "@/lib/api";
 import {
   assistantHasRenderableContent,
@@ -32,6 +33,10 @@ function nowMs(): number {
 export default function ChatPage() {
   const router = useRouter();
   const [messages, setMessages] = useState<ChatMessageDto[]>([]);
+  const [historySource, setHistorySource] = useState<
+    "pending" | "api" | "error"
+  >("pending");
+  useScreenPerformance("/chat", historySource);
   // 콜드 진입 시 접어둔 과거 메시지 (한 번 펼치면 비워짐)
   const hiddenHistoryRef = useRef<ChatMessageDto[]>([]);
   const [hiddenCount, setHiddenCount] = useState(0);
@@ -80,6 +85,7 @@ export default function ChatPage() {
     let active = true;
     void loadChat().then((state) => {
       if (!active) return;
+      setHistorySource(state.source === "api" ? "api" : "error");
       // 과거에 빈/누출뿐인 채로 저장된 어시스턴트 메시지는 빈 말풍선이 되므로 걸러낸다.
       const incoming = state.data.messages.filter(
         (m) =>

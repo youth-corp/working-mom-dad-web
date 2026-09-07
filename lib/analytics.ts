@@ -315,3 +315,13 @@ export function resetAnalyticsIdentity(): void {
   if (!initializeAmplitude()) return;
   amplitude.reset();
 }
+
+/** Performance payloads contain only technical metadata, never domain records. */
+export function trackPerformance(
+  name: string,
+  fields: Record<string, string | number | boolean>,
+): void {
+  if (process.env.NODE_ENV !== "production")
+    console.info("[performance]", name, fields);
+  if (initializeAmplitude()) amplitude.track(`Performance ${name}`, fields);
+}

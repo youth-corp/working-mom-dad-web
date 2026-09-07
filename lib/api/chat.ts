@@ -56,7 +56,7 @@ export const streamChatMessage = async (
 
   let response: Response;
   try {
-    response = await fetch(`${BASE_URL}/me/chat/messages/stream`, {
+    response = await measuredFetch(`${BASE_URL}/me/chat/messages/stream`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -145,3 +145,4 @@ export const deleteChat = async (): Promise<{ ok: boolean }> => {
     return { ok: false };
   }
 };
+import { measuredFetch } from "../performance";

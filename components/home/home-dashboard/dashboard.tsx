@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { usePullToRefresh } from "@/hooks/use-pull-to-refresh";
 import { track } from "@/lib/analytics";
+import { useScreenPerformance } from "@/hooks/use-screen-performance";
 import {
   ApiError,
   api,
@@ -42,6 +43,7 @@ export const HomeDashboard = () => {
   const [notificationSubmitting, setNotificationSubmitting] = useState(false);
   const [checkingNotification, setCheckingNotification] = useState(false);
   const [showNotificationNudge, setShowNotificationNudge] = useState(false);
+  useScreenPerformance("/", state ? "api" : loading ? "pending" : "error");
 
   const refresh = useCallback(
     async (childId?: string | null, showLoading = true) => {
